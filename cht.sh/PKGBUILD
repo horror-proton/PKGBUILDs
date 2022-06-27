@@ -24,7 +24,11 @@ noextract=("${source[@]%%::*}")
 md5sums=('SKIP')
 validpgpkeys=()
 
+pkgver() {
+	grep -m1 -oP '(?<='__CHTSH_VERSION=').*' ${source[@]%%::*}
+}
+
 package() {
-    install -D -m 755 ${source[@]%%::*} "${pkgdir}/usr/bin/cht.sh"
+	install -D -m 755 ${source[@]%%::*} "${pkgdir}/usr/bin/cht.sh"
 }
 
