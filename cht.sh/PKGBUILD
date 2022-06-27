@@ -1,0 +1,30 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=cht.sh
+pkgver=0.0.4
+pkgrel=1
+epoch=
+pkgdesc="The only cheat sheet you need (command line client for cheat.sh)"
+arch=('any')
+url="https://github.com/chubin/cheat.sh"
+license=('MIT')
+groups=()
+depends=('curl')
+makedepends=()
+checkdepends=()
+optdepends=('xsel' 'rlwrap')
+provides=('cht.sh-git')
+conflicts=('cht.sh-git')
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("$pkgname-$pkgver.sh::https://cht.sh/:cht.sh")
+noextract=("${source[@]%%::*}")
+md5sums=('SKIP')
+validpgpkeys=()
+
+package() {
+    install -D -m 755 ${source[@]%%::*} "${pkgdir}/usr/bin/cht.sh"
+}
+
