@@ -1,0 +1,8 @@
+post_install() {
+cat << EOF
+
+To install for user (remember to backup your existing ~/.tmux.conf first): 
+    ln -s -b -f /usr/share/oh-my-tmux/.tmux.conf ~
+    cp /usr/share/oh-my-tmux/.tmux.conf.local ~
+EOF
+}

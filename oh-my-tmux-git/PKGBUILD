@@ -1,0 +1,31 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=oh-my-tmux-git
+pkgver=r287.b69ae7c
+pkgrel=1
+pkgdesc="🇫🇷 Oh my tmux! My self-contained, pretty & versatile tmux configuration made with ❤️"
+arch=('any')
+url="https://github.com/gpakosz/.tmux"
+license=('MIT' 'WTFPLv2')
+groups=()
+depends=('tmux')
+makedepends=('git')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+replaces=()
+backup=()
+options=()
+install="${pkgname}.install"
+source=("${pkgname}::git+${url}")
+noextract=()
+md5sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/${pkgname}"
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+	cd "$srcdir/${pkgname}"
+	install -m 644 -D ".tmux.conf" "$pkgdir/usr/share/${pkgname%-git}/.tmux.conf"
+	install -m 644 -D ".tmux.conf.local" "$pkgdir/usr/share/${pkgname%-git}/.tmux.conf.local"
+}
