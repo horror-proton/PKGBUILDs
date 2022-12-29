@@ -1,0 +1,49 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-packages:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+
+    steps:
+      - name: Upgrade system
+        run: |
+          pacman-key --init
+          pacman -Sy --noconfirm && pacman -S --noconfirm archlinux-keyring
+          pacman -Syu --noconfirm reflector git
+
+          reflector > /etc/pacman.d/mirrorlist
+
+      - name: Create user
+        run: |
+          chmod -R a+rw .
+          useradd arch -m
+          echo "arch ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          cd ~arch
+          chmod -R a+rw .
+
+      - name: Install aur helper
+        if: ${{ false }}
+        run: |
+          sudo --set-home --user=arch git clone https://aur.archlinux.org/paru.git
+          cd paru
+          sudo --set-home --user=arch makepkg --noconfirm --rmdeps -si
+          cd ..
+          rm -rf paru
+
+      - name: Build packages
+        run: |
+          sudo --set-home --user=arch git clone https://aur.archlinux.org/llvm-git.git
+          cd llvm-git
+          sudo --set-home --user=arch makepkg --noconfirm --rmdeps -s --nocheck
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          files: |
+            */*.pkg.tar.zst
