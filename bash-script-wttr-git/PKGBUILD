@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=bash-script-wttr-git
-pkgver=r38.9521f33
+pkgver=r42.bf90e8d
 pkgrel=1
 pkgdesc="A bash script to check weather condition via terminal"
 arch=('any')
