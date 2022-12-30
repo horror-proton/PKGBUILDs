@@ -14,33 +14,37 @@ jobs:
       - name: Upgrade system
         run: |
           pacman-key --init
-          pacman -Sy --noconfirm && pacman -S --noconfirm archlinux-keyring
-          pacman -Syu --noconfirm reflector git
+          pacman -Sy --noconfirm && pacman -S --needed --noconfirm archlinux-keyring
+          pacman -Syu --noconfirm --needed reflector git ccache
 
           reflector > /etc/pacman.d/mirrorlist
+
+          sed -i 's/!ccache/ccache/g' /etc/makepkg.conf
 
       - name: Create user
         run: |
           chmod -R a+rw .
-          useradd arch -m
+          useradd arch -m -d /home/arch
           echo "arch ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           cd ~arch
           chmod -R a+rw .
 
-      - name: Install aur helper
-        if: ${{ false }}
-        run: |
-          sudo --set-home --user=arch git clone https://aur.archlinux.org/paru.git
-          cd paru
-          sudo --set-home --user=arch makepkg --noconfirm --rmdeps -si
-          cd ..
-          rm -rf paru
+      - uses: actions/cache/restore@v3
+        with:
+          path: /home/arch/.cache/ccache
+          key: arch-ccache
 
       - name: Build packages
         run: |
           sudo --set-home --user=arch git clone https://aur.archlinux.org/llvm-git.git
           cd llvm-git
           sudo --set-home --user=arch makepkg --noconfirm --rmdeps -s --nocheck
+
+      - uses: actions/cache/save@v3
+        if: always()
+        with:
+          path: /home/arch/.cache/ccache
+          key: arch-ccache
 
       - uses: softprops/action-gh-release@v1
         with:
