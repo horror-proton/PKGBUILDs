@@ -14,8 +14,9 @@ jobs:
       - name: Upgrade system
         run: |
           pacman-key --init
-          pacman -Sy --noconfirm && pacman -S --needed --noconfirm archlinux-keyring
-          pacman -Syu --noconfirm --needed reflector git ccache
+          pacman -Sy --noconfirm
+          pacman -S --needed --noconfirm archlinux-keyring
+          pacman -Syu --noconfirm --needed reflector git ccache github-cli
 
           reflector > /etc/pacman.d/mirrorlist
 
@@ -30,15 +31,33 @@ jobs:
           chmod -R a+rw .
 
       - uses: actions/cache/restore@v3
+        id: cache-restore
         with:
           path: /home/arch/.cache/ccache
           key: arch-ccache
 
+      - uses: actions/checkout@v3
+      
+      - name: Setup git safe directory
+        run: |
+          git config --global --add safe.directory '*'
+          sudo --set-home --user=arch git config --global --add safe.directory '*'
+          chown -R arch . # DANGER
+
       - name: Build packages
         run: |
-          sudo --set-home --user=arch git clone https://aur.archlinux.org/llvm-git.git
+          sudo --set-home --user=arch  git clone https://aur.archlinux.org/llvm-git.git
           cd llvm-git
           sudo --set-home --user=arch makepkg --noconfirm --rmdeps -s --nocheck
+
+      - name: Clear GitHub action cache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          if ${{ steps.cache-restore.outputs.cache-hit == 'true' }}; then
+            gh actions-cache delete arch-ccache --confirm
+          fi
 
       - uses: actions/cache/save@v3
         if: always()
