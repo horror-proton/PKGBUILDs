@@ -4,7 +4,7 @@ on:
   push:
   workflow_dispatch:
   schedule:
-    - cron: '30 18 * * *'
+    - cron: '45 15 * * *'
 
 jobs:
   build-packages:
@@ -16,12 +16,15 @@ jobs:
       - name: Upgrade system
         run: |
           pacman-key --init
-          pacman -Sy --noconfirm
-          pacman -S --needed --noconfirm archlinux-keyring
+          pacman -Sy --needed --noconfirm archlinux-keyring
           pacman -Syu --noconfirm --needed reflector git ccache github-cli
 
-          reflector > /etc/pacman.d/mirrorlist
+      - name: Update mirrorlist
+        run: |
+          reflector > /etc/pacman.d/mirrorlist || exit 0
 
+      - name: Enable ccache for makepkg
+        run: |
           sed -i 's/!ccache/ccache/g' /etc/makepkg.conf
 
       - name: Create user
