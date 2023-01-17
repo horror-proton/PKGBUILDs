@@ -1,6 +1,6 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 pkgname=oh-my-tmux-git
-pkgver=r297.5641d3b
+pkgver=r302.2cf4d9a
 pkgrel=1
 pkgdesc="🇫🇷 Oh my tmux! My self-contained, pretty & versatile tmux configuration made with ❤️"
 arch=('any')
