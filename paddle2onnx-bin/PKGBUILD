@@ -1,5 +1,5 @@
-pkgname=paddle2onnx
-pkgver=1.0.3
+pkgname=paddle2onnx-bin
+pkgver=1.0.5
 pkgrel=1
 epoch=
 pkgdesc="ONNX Model Exporter for PaddlePaddle"
@@ -16,10 +16,10 @@ backup=()
 options=()
 install=
 changelog=
-source=("https://github.com/PaddlePaddle/Paddle2ONNX/releases/download/v$pkgver/$pkgname-linux-x64-$pkgver.tgz")
+source=("https://github.com/PaddlePaddle/Paddle2ONNX/releases/download/v$pkgver/${pkgname%-bin}-linux-x64-$pkgver.tgz")
 md5sums=('SKIP')
 
 package() {
-    cd "$pkgname-linux-x64-$pkgver"
+    cd "${pkgname%-bin}-linux-x64-$pkgver"
     cp -rv . "$pkgdir/"
 }
