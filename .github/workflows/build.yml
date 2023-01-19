@@ -19,6 +19,16 @@ jobs:
           pacman -Sy --needed --noconfirm archlinux-keyring
           pacman -Syu --noconfirm --needed reflector git ccache github-cli
 
+      - name: Add unofficial user repositories
+        run: |
+          cat << _EOF >> /etc/pacman.conf
+          [archlinuxcn]
+            Server = https://repo.archlinuxcn.org/\$arch
+          _EOF
+
+          pacman -Sy --noconfirm && pacman -S --noconfirm archlinuxcn-keyring
+          pacman -Syu --noconfirm
+
       - name: Update mirrorlist
         run: |
           reflector > /etc/pacman.d/mirrorlist || exit 0
@@ -49,13 +59,28 @@ jobs:
           sudo --set-home --user=arch git config --global --add safe.directory '*'
           chown -R arch . # DANGER
 
+      - name: Install aur helper
+        run: |
+          sudo pacman -S --noconfirm paru && exit 0
+
+          sudo --set-home --user=arch  git clone https://aur.archlinux.org/paru.git
+          cd paru
+          sudo --set-home --user=arch makepkg --noconfirm --rmdeps -si
+          cd ..
+          rm -rf paru
+
       - name: Build packages
         run: |
-          sudo --set-home --user=arch  git clone https://aur.archlinux.org/llvm-git.git
-          cd llvm-git
-          sudo --set-home --user=arch makepkg --noconfirm --rmdeps -s --nocheck
+          for dir in *${{ github.event_name == 'schedule' && '-git' || '' }}/; do
+            echo ::group::$dir
+            cd $dir
+            sudo --set-home --user=arch paru -U --noconfirm
+            cd ..
+            echo ::endgroup::
+          done
 
       - name: Clear GitHub action cache
+        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -71,6 +96,7 @@ jobs:
           key: arch-ccache
 
       - uses: softprops/action-gh-release@v1
+        if: ${{ github.ref_name == 'master' }}
         with:
           tag_name: latest
           files: |
