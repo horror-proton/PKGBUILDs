@@ -1,0 +1,75 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+
+pkgname=maa-assistant-arknights-git
+pkgver="v4.10.3"
+pkgrel=1
+pkgdesc="An Arknights assistant"
+arch=(x86_64)
+url="https://github.com/MaaAssistantArknights/MaaAssistantArknights"
+license=('AGPL')
+depends=(opencv onnxruntime)
+makedepends=(eigen git cmake python ninja python-pyelftools elfutils patchelf unzip zip)
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+source=('MaaAssistantArknights::git+https://github.com/dantmnf/MaaAssistantArknights.git#branch=arm64'
+        'MaaDeps::git+https://github.com/MaaAssistantArknights/MaaDeps.git'
+        'MaaDeps.patch')
+md5sums=('SKIP' 'SKIP' 'SKIP')
+
+pkgver() {
+    cd "$srcdir/MaaAssistantArknights"
+    # remove this
+    git remote add maa https://github.com/MaaAssistantArknights/MaaAssistantArknights.git
+    git fetch --tags --force maa
+    git remote remove maa
+    printf "%s" "$(git describe --long --tags | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+}
+
+_vcpkg_empty_overlay() {
+    mkdir -p "$1"
+    echo 'set(VCPKG_POLICY_EMPTY_PACKAGE enabled)' > "$1"/portfile.cmake
+    echo "{ \"name\": \"$1\", \"version\": \"$2\" }" > "$1"/vcpkg.json
+}
+
+prepare() {
+    cd "$srcdir/MaaAssistantArknights"
+    git submodule init
+    git config submodule.MaaDeps.url "$srcdir/MaaDeps"
+    git -c protocol.file.allow=always submodule update MaaDeps
+
+    sed -i 's/imgproc/imgproc imgcodecs/g' CMakeLists.txt
+
+    cd "MaaDeps"
+    sed -i $'s/\r$//' maadeps.cmake
+    patch -p1 -i ../../MaaDeps.patch
+
+    cd "vcpkg-overlay/ports"
+    _vcpkg_empty_overlay eigen3 $(pacman -Q eigen | awk '{print $2}')
+    _vcpkg_empty_overlay opencv $(pacman -Q opencv | awk '{print $2}')
+    _vcpkg_empty_overlay opencv4 $(pacman -Q opencv | awk '{print $2}')
+    _vcpkg_empty_overlay maa-onnxruntime $(pacman -Q onnxruntime | awk '{print $2}')
+}
+
+build() {
+    cd "$srcdir/MaaAssistantArknights"
+    cd "MaaDeps"
+    python ./build.py
+
+    cd "$srcdir"
+    cmake -B build -S MaaAssistantArknights \
+        -DCMAKE_CXX_FLAGS=-I"$PWD"/MaaAssistantArknights/MaaDeps/vcpkg/installed/maa-x64-linux/include \
+        -DINSTALL_THIRD_LIBS=ON \
+        -DINSTALL_RESOURCE=ON \
+        -DINSTALL_PYTHON=ON
+    cmake --build build --parallel $(nproc --all)
+}
+
+package() {
+    cd "$srcdir"
+    cmake --install build --prefix "$pkgdir"/usr
+
+    cd "$pkgdir"/usr
+    mkdir -p share/"${pkgname%-git}"
+    mv Python share/"${pkgname%-git}"
+    mv resource share/"${pkgname%-git}"
+}
