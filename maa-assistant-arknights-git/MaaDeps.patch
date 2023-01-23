@@ -48,27 +48,27 @@ index 0000000..bacfa90
 +   initialized_ = true;
 +   return true;
 diff --git a/vcpkg-overlay/ports/maa-fastdeploy/portfile.cmake b/vcpkg-overlay/ports/maa-fastdeploy/portfile.cmake
-index 39c10db..cafd7a0 100644
+index 6458212..f94665b 100644
 --- a/vcpkg-overlay/ports/maa-fastdeploy/portfile.cmake
 +++ b/vcpkg-overlay/ports/maa-fastdeploy/portfile.cmake
 @@ -3,6 +3,7 @@ vcpkg_from_github(
      REPO MaaAssistantArknights/FastDeploy
-     REF b7da9c53881c73a3ef993fb5f0ef232b4c56a72a
-     SHA512 39bbe98b0b8a0a38b15540aeb6593e9af2716b75283f81d8a8462ddda3000920ef1b5d2a23270ba6df616b53fa4176a99583d6152c903f871fe3a16e70620832
+     REF 5947e66d35744cbf94a3bf20fa7e5342752d0c26
+     SHA512 e69dfa5b9cd43ef0a7636970b0e14fee91a7bdaeb9483279d6b6efb9fadd09669b76960416d293b118acf1e8d649d3eb4f63aa1b8f19a25f4ddb0513d861d4ce
 +    PATCHES fastdeploy-ort_1_13.patch
  )
  
  vcpkg_cmake_configure(
 diff --git a/vcpkg.json b/vcpkg.json
-index e569405..d2b93da 100644
+index 329c6f0..e40fb34 100644
 --- a/vcpkg.json
 +++ b/vcpkg.json
-@@ -1,36 +1,11 @@
+@@ -1,36 +1,12 @@
  {
    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
--  "name": "maa-meta",
-+  "name": "maa-meta-archlinux",
-   "version": "2023-01-17",
+   "name": "maa-meta",
+-  "version": "2023-01-17",
++  "version": "2023-01-17-archlinux",
    "description": "meta manifest that tracks dependencies for MAA",
    "homepage": "https://github.com/MaaAssistantArknights/MaaDeps",
    "license": null,
@@ -78,7 +78,6 @@ index e569405..d2b93da 100644
 -      "default-features": false,
 -      "features": [
 -        "eigen",
--        "lapack",
 -        "jpeg",
 -        "png",
 -        "tiff",
@@ -91,14 +90,15 @@ index e569405..d2b93da 100644
 -      "default-features": false,
 -      "features": [
 -        "eigen",
--        "lapack",
 -        "jpeg",
 -        "png",
 -        "tiff",
 -        "world"
 -      ]
 -    },
-     "maa-fastdeploy"
+     "maa-fastdeploy",
+-    "zlib",
+     "asio"
    ]
  }
 diff --git a/maadeps.cmake b/maadeps.cmake
