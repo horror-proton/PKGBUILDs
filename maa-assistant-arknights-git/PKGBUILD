@@ -11,17 +11,13 @@ depends=(opencv onnxruntime)
 makedepends=(eigen git cmake python ninja python-pyelftools elfutils patchelf unzip zip)
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
-source=('MaaAssistantArknights::git+https://github.com/dantmnf/MaaAssistantArknights.git#branch=arm64'
+source=('MaaAssistantArknights::git+https://github.com/MaaAssistantArknights/MaaAssistantArknights.git#branch=dev'
         'MaaDeps::git+https://github.com/MaaAssistantArknights/MaaDeps.git'
         'MaaDeps.patch')
 md5sums=('SKIP' 'SKIP' 'SKIP')
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
-    # remove this
-    git remote add maa https://github.com/MaaAssistantArknights/MaaAssistantArknights.git
-    git fetch --tags --force maa
-    git remote remove maa
     printf "%s" "$(git describe --long --tags | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
 }
 
@@ -33,11 +29,14 @@ _vcpkg_empty_overlay() {
 
 prepare() {
     cd "$srcdir/MaaAssistantArknights"
+
+    # FIXME: remove after pr is merged
+    git fetch -f origin pull/3346/head:arm64
+    git checkout -f arm64
+
     git submodule init
     git config submodule.MaaDeps.url "$srcdir/MaaDeps"
     git -c protocol.file.allow=always submodule update MaaDeps
-
-    sed -i 's/imgproc/imgproc imgcodecs/g' CMakeLists.txt
 
     cd "MaaDeps"
     sed -i $'s/\r$//' maadeps.cmake
