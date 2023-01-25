@@ -60,7 +60,7 @@ build() {
         -DINSTALL_THIRD_LIBS=ON \
         -DINSTALL_RESOURCE=ON \
         -DINSTALL_PYTHON=ON
-    cmake --build build --parallel $(nproc --all)
+    cmake --build build
 }
 
 package() {
