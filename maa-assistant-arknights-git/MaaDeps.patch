@@ -1,14 +1,14 @@
 diff --git a/vcpkg-overlay/ports/maa-fastdeploy/fastdeploy-ort_1_13.patch b/vcpkg-overlay/ports/maa-fastdeploy/fastdeploy-ort_1_13.patch
 new file mode 100644
-index 0000000..bacfa90
+index 0000000..b95777e
 --- /dev/null
 +++ b/vcpkg-overlay/ports/maa-fastdeploy/fastdeploy-ort_1_13.patch
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,41 @@
 +diff --git a/fastdeploy/backends/ort/ort_backend.cc b/fastdeploy/backends/ort/ort_backend.cc
-+index 1e6d8bf..1551dc0 100755
++index 1e6d8bfb..2295ba84 100644
 +--- a/fastdeploy/backends/ort/ort_backend.cc
 ++++ b/fastdeploy/backends/ort/ort_backend.cc
-+@@ -151,31 +151,31 @@ bool OrtBackend::InitFromOnnx(const std::string& model_file,
++@@ -151,31 +151,29 @@ bool OrtBackend::InitFromOnnx(const std::string& model_file,
 +   Ort::Allocator allocator(session_, memory_info);
 +   size_t n_inputs = session_.GetInputCount();
 +   for (size_t i = 0; i < n_inputs; ++i) {
@@ -22,7 +22,6 @@ index 0000000..bacfa90
 +-    inputs_desc_.emplace_back(OrtValueInfo{input_name, shape, data_type});
 +-    allocator.Free(input_name);
 ++    inputs_desc_.emplace_back(OrtValueInfo{input_name.get(), shape, data_type});
-++    allocator.Free(input_name.get());
 +   }
 + 
 +   size_t n_outputs = session_.GetOutputCount();
@@ -43,7 +42,6 @@ index 0000000..bacfa90
 ++    binding_->BindOutput(output_name.get(), out_memory_info);
 + 
 +-    allocator.Free(output_name);
-++    allocator.Free(output_name.get());
 +   }
 +   initialized_ = true;
 +   return true;
