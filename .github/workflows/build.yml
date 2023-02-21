@@ -13,11 +13,21 @@ jobs:
       image: archlinux:base-devel
 
     steps:
+      - name: Cache packages
+        uses: actions/cache@v3
+        id: packages-cache
+        with:
+          key: packages
+          path: | 
+            /var/cache/pacman
+            /home/arch/.cache/paru/clone
+
       - name: Upgrade system
         run: |
           pacman-key --init
           pacman -Sy --needed --noconfirm archlinux-keyring
-          pacman -Syu --noconfirm --needed reflector git ccache github-cli
+          pacman -Syu --noconfirm --needed reflector git ccache github-cli pacman-contrib
+          paccache -rvvv
 
       - name: Add unofficial user repositories
         run: |
@@ -31,7 +41,7 @@ jobs:
 
       - name: Update mirrorlist
         run: |
-          reflector > /etc/pacman.d/mirrorlist || exit 0
+          reflector --protocol https --latest 10 --save /etc/pacman.d/mirrorlist || exit 0
 
       - name: Enable ccache for makepkg
         run: |
@@ -46,7 +56,7 @@ jobs:
           chmod -R a+rw .
 
       - uses: actions/cache/restore@v3
-        id: cache-restore
+        id: ccache-restore
         with:
           path: /home/arch/.cache/ccache
           key: arch-ccache
@@ -74,19 +84,21 @@ jobs:
           for dir in *${{ github.event_name == 'schedule' && '-git' || '' }}/; do
             echo ::group::$dir
             cd $dir
-            sudo --set-home --user=arch paru -U --noconfirm
+            sudo --set-home --user=arch paru -U --noconfirm --skipreview
             cd ..
             echo ::endgroup::
           done
 
       - name: Clear GitHub action cache
-        if: false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh extension install actions/gh-actions-cache
-          if ${{ steps.cache-restore.outputs.cache-hit == 'true' }}; then
+          if ${{ steps.ccache-restore.outputs.cache-hit == 'true' }}; then
             gh actions-cache delete arch-ccache --confirm
+          fi
+          if ${{ steps.packages-cache.outputs.cache-hit == 'true' }}; then
+            gh actions-cache delete packages --confirm
           fi
 
       - uses: actions/cache/save@v3
