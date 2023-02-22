@@ -13,14 +13,21 @@ jobs:
       image: archlinux:base-devel
 
     steps:
+      - name: Create user
+        run: |
+          chmod -R a+rw .
+          useradd arch -m -d /home/arch
+          echo "arch ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          sudo --set-home --user=arch mkdir -p ~arch/.cache/paru ~arch/.cache/ccache
+
       - name: Cache packages
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         id: packages-cache
         with:
           key: packages
           path: | 
             /var/cache/pacman
-            /home/arch/.cache/paru/clone
+            /home/arch/.cache/paru
 
       - name: Upgrade system
         run: |
@@ -47,14 +54,6 @@ jobs:
         run: |
           sed -i 's/!ccache/ccache/g' /etc/makepkg.conf
 
-      - name: Create user
-        run: |
-          chmod -R a+rw .
-          useradd arch -m -d /home/arch
-          echo "arch ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          cd ~arch
-          chmod -R a+rw .
-
       - uses: actions/cache/restore@v3
         id: ccache-restore
         with:
@@ -73,7 +72,7 @@ jobs:
         run: |
           sudo pacman -S --noconfirm paru && exit 0
 
-          sudo --set-home --user=arch  git clone https://aur.archlinux.org/paru.git
+          sudo --set-home --user=arch git clone https://aur.archlinux.org/paru.git
           cd paru
           sudo --set-home --user=arch makepkg --noconfirm --rmdeps -si
           cd ..
@@ -100,6 +99,14 @@ jobs:
           if ${{ steps.packages-cache.outputs.cache-hit == 'true' }}; then
             gh actions-cache delete packages --confirm
           fi
+
+      - name: Post cache packages
+        uses: actions/cache/save@v3
+        with:
+          key: packages
+          path: | 
+            /var/cache/pacman
+            /home/arch/.cache/paru
 
       - uses: actions/cache/save@v3
         if: always()
