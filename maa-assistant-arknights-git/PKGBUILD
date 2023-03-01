@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver="v4.10.3"
+pkgver=v4.11.0.alpha.2.r40.713087bd
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -46,7 +46,7 @@ prepare() {
     _vcpkg_empty_overlay eigen3 $(pacman -Q eigen | awk '{print $2}')
     _vcpkg_empty_overlay opencv $(pacman -Q opencv | awk '{print $2}')
     _vcpkg_empty_overlay opencv4 $(pacman -Q opencv | awk '{print $2}')
-    _vcpkg_empty_overlay maa-onnxruntime $(pacman -Q onnxruntime | awk '{print $2}')
+    _vcpkg_empty_overlay maa-onnxruntime $(grep '^Version: ' /usr/lib/pkgconfig/libonnxruntime.pc | awk '{print $2}')
 }
 
 build() {
