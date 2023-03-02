@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=v4.11.0.alpha.2.r40.713087bd
+pkgver=4.11.0.alpha.2.r40.713087bd
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -18,7 +18,7 @@ md5sums=('SKIP' 'SKIP' 'SKIP')
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
-    printf "%s" "$(git describe --long --tags | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+    printf "%s" "$(git describe --long --tags | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
 }
 
 _vcpkg_empty_overlay() {
