@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel
+    permissions:
+      contents: write
+      actions: write
 
     steps:
       - name: Create user
@@ -34,7 +37,6 @@ jobs:
           pacman-key --init
           pacman -Sy --needed --noconfirm archlinux-keyring
           pacman -Syu --noconfirm --needed reflector git ccache github-cli pacman-contrib
-          paccache -rvvv
 
       - name: Add unofficial user repositories
         run: |
@@ -100,7 +102,22 @@ jobs:
             gh actions-cache delete packages --confirm
           fi
 
-      - name: Post cache packages
+      - name: Clean cache
+        run: |
+          paccache -rvvv -k 1
+
+          shopt -s nullglob
+
+          aurs=$(pacman -Qmq) || exit 0
+          for fn in /home/arch/.cache/paru/clone/*; do
+            if [ $(comm -12 <(grep 'pkgname' "$fn"/.SRCINFO | cut -d \  -f 3 | sort) <(echo "$aurs") | wc -l) -eq 0 ]; then
+              echo removing "$fn"
+              rm -rf "$fn"
+            fi
+          done
+
+      - name: Save package cache
+        if: always()
         uses: actions/cache/save@v3
         with:
           key: packages
