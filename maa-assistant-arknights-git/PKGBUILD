@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=4.11.0.alpha.2.r40.713087bd
+pkgver=4.11.0.beta.1.r30.8ef761ef
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -13,8 +13,12 @@ provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
 source=('MaaAssistantArknights::git+https://github.com/MaaAssistantArknights/MaaAssistantArknights.git#branch=dev'
         'MaaDeps::git+https://github.com/MaaAssistantArknights/MaaDeps.git'
+        'vcpkg::git+https://github.com/microsoft/vcpkg.git'
         'MaaDeps.patch')
-md5sums=('SKIP' 'SKIP' 'SKIP')
+md5sums=('SKIP'
+         'SKIP'
+         'SKIP'
+         '3a24dda8815a4f2ccd3caa26cdb9f17f')
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
@@ -31,14 +35,18 @@ prepare() {
     cd "$srcdir/MaaAssistantArknights"
 
     # FIXME: remove after pr is merged
-    git fetch -f origin pull/3346/head:arm64
-    git checkout -f arm64
+    git fetch origin refs/pull/3346/merge
+    git checkout -f FETCH_HEAD
 
     git submodule init
     git config submodule.MaaDeps.url "$srcdir/MaaDeps"
     git -c protocol.file.allow=always submodule update MaaDeps
 
     cd "MaaDeps"
+    git submodule init
+    git config submodule.vcpkg.url "$srcdir/vcpkg"
+    git -c protocol.file.allow=always submodule update vcpkg
+
     sed -i $'s/\r$//' maadeps.cmake
     patch -p1 -i ../../MaaDeps.patch
 
