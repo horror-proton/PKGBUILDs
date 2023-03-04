@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=4.11.0.beta.1.r30.8ef761ef
+pkgver=4.11.0.r137.52c7d6bc
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -41,6 +41,8 @@ prepare() {
     git submodule init
     git config submodule.MaaDeps.url "$srcdir/MaaDeps"
     git -c protocol.file.allow=always submodule update MaaDeps
+
+    sed -i 's/RUNTIME\sDESTINATION\s\./ /g; s/LIBRARY\sDESTINATION\s\./ /g;' CMakeLists.txt
 
     cd "MaaDeps"
     git submodule init
