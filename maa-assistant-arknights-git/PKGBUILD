@@ -34,10 +34,6 @@ _vcpkg_empty_overlay() {
 prepare() {
     cd "$srcdir/MaaAssistantArknights"
 
-    # FIXME: remove after pr is merged
-    git fetch origin refs/pull/3346/merge
-    git checkout -f FETCH_HEAD
-
     git submodule init
     git config submodule.MaaDeps.url "$srcdir/MaaDeps"
     git -c protocol.file.allow=always submodule update MaaDeps
@@ -69,7 +65,8 @@ build() {
         -DCMAKE_CXX_FLAGS=-I"$PWD"/MaaAssistantArknights/MaaDeps/vcpkg/installed/maa-x64-linux/include \
         -DINSTALL_THIRD_LIBS=ON \
         -DINSTALL_RESOURCE=ON \
-        -DINSTALL_PYTHON=ON
+        -DINSTALL_PYTHON=ON \
+        -DMAA_VERSION=v"$pkgver"
     cmake --build build
 }
 
