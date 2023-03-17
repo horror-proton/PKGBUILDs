@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=4.11.0.r137.52c7d6bc
+pkgver=4.12.3.r7.14a6cc7e
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -22,7 +22,7 @@ md5sums=('SKIP'
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
-    printf "%s" "$(git describe --long --tags | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
+    printf "%s" "$(git describe --long --tags | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
 }
 
 _vcpkg_empty_overlay() {
@@ -38,12 +38,14 @@ prepare() {
     git config submodule.MaaDeps.url "$srcdir/MaaDeps"
     git -c protocol.file.allow=always submodule update MaaDeps
 
-    sed -i 's/RUNTIME\sDESTINATION\s\./ /g; s/LIBRARY\sDESTINATION\s\./ /g;' CMakeLists.txt
+    sed -i 's/RUNTIME\sDESTINATION\s\./ /g; s/LIBRARY\sDESTINATION\s\./ /g; s/PUBLIC_HEADER\sDESTINATION\s\./ /g' CMakeLists.txt
 
     cd "MaaDeps"
     git submodule init
     git config submodule.vcpkg.url "$srcdir/vcpkg"
     git -c protocol.file.allow=always submodule update vcpkg
+    git restore .
+    git clean -ff
 
     sed -i $'s/\r$//' maadeps.cmake
     patch -p1 -i ../../MaaDeps.patch
@@ -62,6 +64,7 @@ build() {
 
     cd "$srcdir"
     cmake -B build -S MaaAssistantArknights \
+        -DCMAKE_BUILD_TYPE=None \
         -DCMAKE_CXX_FLAGS=-I"$PWD"/MaaAssistantArknights/MaaDeps/vcpkg/installed/maa-x64-linux/include \
         -DINSTALL_THIRD_LIBS=ON \
         -DINSTALL_RESOURCE=ON \
