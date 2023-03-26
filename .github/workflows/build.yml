@@ -74,19 +74,22 @@ jobs:
         run: |
           sudo pacman -S --noconfirm paru && exit 0
 
-          sudo --set-home --user=arch git clone https://aur.archlinux.org/paru.git
-          cd paru
-          sudo --set-home --user=arch makepkg --noconfirm --rmdeps -si
-          cd ..
+          sudo --set-home --user=arch -i -- << _EOF
+          set -e
+          git clone https://aur.archlinux.org/paru.git
+          pushd paru
+          makepkg --noconfirm --rmdeps -si
+          popd
           rm -rf paru
+          _EOF
 
       - name: Build packages
         run: |
           for dir in *${{ github.event_name == 'schedule' && '-git' || '' }}/; do
             echo ::group::$dir
-            cd $dir
+            pushd $dir
             sudo --set-home --user=arch paru -U --noconfirm --skipreview
-            cd ..
+            popd
             echo ::endgroup::
           done
 
