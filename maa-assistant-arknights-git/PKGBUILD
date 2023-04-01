@@ -1,13 +1,13 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=4.13.0beta.1.r8.798de9c8
+pkgver=4.13.0beta.2.r1.ca93e55c
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
 url="https://github.com/MaaAssistantArknights/MaaAssistantArknights"
 license=('AGPL')
-depends=(opencv onnxruntime)
+depends=(opencv onnxruntime cpr)
 makedepends=(asio eigen git cmake)
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
