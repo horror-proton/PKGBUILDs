@@ -55,6 +55,7 @@ jobs:
       - name: Enable ccache for makepkg
         run: |
           sed -i 's/!ccache/ccache/g' /etc/makepkg.conf
+          echo 'MAKEFLAGS="-j$(nproc --all)"' >> /etc/makepkg.conf
 
       - uses: actions/cache/restore@v3
         id: ccache-restore
