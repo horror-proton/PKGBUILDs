@@ -86,6 +86,8 @@ jobs:
 
       - name: Build packages
         run: |
+          sudo --set-home --user=arch paru -Su --noconfirm --skipreview ${{ vars.PRE_INSTALL }}
+
           for dir in *${{ github.event_name == 'schedule' && '-git' || '' }}/; do
             echo ::group::$dir
             pushd $dir
