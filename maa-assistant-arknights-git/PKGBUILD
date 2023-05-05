@@ -18,7 +18,7 @@ md5sums=('SKIP'
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
-    printf "%s" "$(git describe --long --tags | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
+    printf "%s" "$(git describe --long --tags --match='v*' | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
 }
 
 prepare() {
