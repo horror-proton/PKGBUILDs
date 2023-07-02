@@ -1,0 +1,24 @@
+diff --git a/cmake/external/dnnl.cmake b/cmake/external/dnnl.cmake
+index 397c4d6abe..7d0de48868 100644
+--- a/cmake/external/dnnl.cmake
++++ b/cmake/external/dnnl.cmake
+@@ -26,6 +26,14 @@ elseif(onnxruntime_USE_DNNL AND onnxruntime_DNNL_GPU_RUNTIME STREQUAL "ocl" AND
+ endif()
+ 
+ if (onnxruntime_USE_DNNL)
++# https://oneapi-src.github.io/oneDNN/dev_guide_transition_to_dnnl.html
++find_package(dnnl CONFIG)
++if (TARGET DNNL::dnnl)
++  message("Use DNNL from preinstalled system lib")
++  add_library(project_dnnl INTERFACE)
++  add_library(dnnl INTERFACE)
++  target_link_libraries(dnnl INTERFACE DNNL::dnnl)
++else()
+   set(DNNL_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/dnnl/src/dnnl/src)
+   set(DNNL_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/dnnl/install)
+   set(DNNL_LIB_DIR ${DNNL_INSTALL}/${CMAKE_INSTALL_LIBDIR})
+@@ -55,3 +63,4 @@ if (onnxruntime_USE_DNNL)
+   )
+   link_directories(${DNNL_LIB_DIR})
+ endif()
++endif()
