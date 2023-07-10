@@ -69,4 +69,7 @@ package() {
     mkdir -p share/"${pkgname%-git}"
     mv Python share/"${pkgname%-git}"
     mv resource share/"${pkgname%-git}"
+
+    cd share/"${pkgname%-git}"
+    ln -s ../../lib/* .
 }
