@@ -36,8 +36,10 @@ prepare() {
 
 build() {
     cd "$srcdir"
+    CXXFLAGS="$CXXFLAGS -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
+
+    CXXFLAGS="$CXXFLAGS -fPIC" \
     cmake -B build-fastdeploy -S FastDeploy \
-        -DCMAKE_CXX_FLAGS=-fPIC\ -fmacro-prefix-map="$srcdir"= \
         -DCMAKE_BUILD_TYPE=None \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX="$srcdir"/installed/usr
@@ -47,10 +49,11 @@ build() {
     cmake --install build-fastdeploy --prefix "$srcdir"/installed/usr
 
     cd "$srcdir"
+
+    CXXFLAGS="$CXXFLAGS -isystem /usr/include/onnxruntime/core/session -isystem $srcdir/installed/usr/include" \
     cmake -B build -S MaaAssistantArknights \
         -DCMAKE_BUILD_TYPE=None \
         -DCMAKE_PREFIX_PATH="$srcdir"/installed/usr \
-        -DCMAKE_CXX_FLAGS=-isystem\ /usr/include/onnxruntime/core/session\ -isystem\ "$srcdir"/installed/usr/include\ -fmacro-prefix-map="$srcdir"= \
         -DUSE_MAADEPS=OFF \
         -DINSTALL_THIRD_LIBS=ON \
         -DINSTALL_RESOURCE=ON \
