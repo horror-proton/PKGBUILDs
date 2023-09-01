@@ -1,0 +1,46 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=maa-cli-git
+pkgver=v0.3.2.r1.7334fcc
+pkgrel=1
+pkgdesc="A simple CLI for MAA by Rust."
+arch=('x86_64' 'aarch64')
+url="https://github.com/MaaAssistantArknights/maa-cli"
+license=('GPL')
+depends=('gcc-libs')
+makedepends=('git' 'cargo')
+optdepends=('maa-assistant-arknights: for preinstalled maa core')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+source=("${pkgname%-git}::git+$url.git")
+md5sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+	printf "%s" "$(git describe --long --tags | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+}
+
+prepare() {
+	cd "$srcdir/${pkgname%-git}"
+	export RUSTUP_TOOLCHAIN=stable
+	cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+	cd "$srcdir/${pkgname%-git}"
+	export RUSTUP_TOOLCHAIN=stable
+	export CARGO_TARGET_DIR=target
+	cargo build --frozen --release --all-features
+}
+
+check() {
+	cd "$srcdir/${pkgname%-git}"
+	export RUSTUP_TOOLCHAIN=stable
+	cargo test --frozen --all-features
+}
+
+package() {
+	cd "$srcdir/${pkgname%-git}"
+	install -Dm0755 -t "$pkgdir/usr/bin/" "target/release/maa"
+	mkdir -p "$pkgdir/usr/share"
+	ln -s maa-assistant-arknights "$pkgdir/usr/share/maa"
+}
