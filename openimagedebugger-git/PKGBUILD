@@ -1,0 +1,39 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=openimagedebugger-git
+pkgver=v1.2.0.r301.e901380
+pkgrel=1
+pkgdesc="An advanced in-memory image visualization plugin for GDB and LLDB"
+arch=("$CARCH")
+url="https://github.com/openimagedebugger/openimagedebugger"
+license=('MIT')
+depends=('qt5-base' 'libgl')
+makedepends=('git' 'cmake' 'eigen')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+install=
+source=("${pkgname%-git}::git+$url.git")
+sha256sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+	printf "%s" "$(git describe --long | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+}
+
+build() {
+	pwd
+	cd "$srcdir"
+	CXXFLAGS="$CXXFLAGS -isystem /usr/include/eigen3/Eigen"
+
+	cmake -B build -S ${pkgname%-git} \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr/lib \
+		-DOpenGL_GL_PREFERENCE=LEGACY
+
+	cmake --build build
+}
+
+package() {
+	cd "$srcdir"/${pkgname%-git}
+	cmake --install ../build --prefix="$pkgdir"/usr/lib
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
