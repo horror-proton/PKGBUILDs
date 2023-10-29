@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=4.19.2.r6.14d325c57
+pkgver=4.26.0beta.2.r37.aecd16c4c
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -12,7 +12,7 @@ makedepends=(asio eigen git cmake)
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
 source=("MaaAssistantArknights::git+$url.git#branch=dev"
-        'FastDeploy::git+https://github.com/MaaAssistantArknights/FastDeploy.git')
+        'FastDeploy::git+https://github.com/MaaAssistantArknights/FastDeploy.git#branch=master')
 md5sums=('SKIP'
          'SKIP')
 
@@ -32,6 +32,9 @@ prepare() {
         -exec sed -i 's/onnxruntime\/core\/session\///g' {} \;
     cp -v "$srcdir"/FastDeploy/cmake/Findonnxruntime.cmake cmake
     sed -i 's/ONNXRuntime/onnxruntime/g' CMakeLists.txt
+
+    cd "$srcdir/FastDeploy"
+    sed -i 's/fastdeploy_ppocr/MaaDerpLearning/g' CMakeLists.txt # git revert -n 0ef77d332
 }
 
 build() {
