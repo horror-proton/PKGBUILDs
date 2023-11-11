@@ -16,6 +16,8 @@ source=("MaaAssistantArknights::git+$url.git#branch=dev"
 md5sums=('SKIP'
          'SKIP')
 
+CXXFLAGS="$CXXFLAGS -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
+
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
     printf "%s" "$(git describe --long --tags --match='v*' | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
@@ -41,10 +43,10 @@ build() {
     cd "$srcdir"
     CXXFLAGS="$CXXFLAGS -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
 
-    CXXFLAGS="$CXXFLAGS -fPIC" \
     cmake -B build-fastdeploy -S FastDeploy \
         -DCMAKE_BUILD_TYPE=None \
         -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMAKE_INSTALL_PREFIX="$srcdir"/installed/usr
     cmake --build build-fastdeploy
 
@@ -53,7 +55,9 @@ build() {
 
     cd "$srcdir"
 
-    CXXFLAGS="$CXXFLAGS -isystem /usr/include/onnxruntime/core/session -isystem $srcdir/installed/usr/include" \
+    CXXFLAGS="$CXXFLAGS \
+    -isystem /usr/include/onnxruntime/core/session \
+    -isystem $srcdir/installed/usr/include" \
     cmake -B build -S MaaAssistantArknights \
         -DCMAKE_BUILD_TYPE=None \
         -DCMAKE_PREFIX_PATH="$srcdir"/installed/usr \
