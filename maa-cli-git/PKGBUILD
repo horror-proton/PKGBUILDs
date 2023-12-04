@@ -11,7 +11,7 @@ makedepends=('git' 'cargo')
 optdepends=('maa-assistant-arknights: for preinstalled maa core')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
-source=("${pkgname%-git}::git+file:///home/arch/projects/maa-cli")
+source=("${pkgname%-git}::git+$url.git")
 md5sums=('SKIP')
 
 pkgver() {
