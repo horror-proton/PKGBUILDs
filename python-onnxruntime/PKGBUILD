@@ -86,6 +86,8 @@ if [[ $_ENABLE_CUDA = 1 ]]; then
     'cudnn'
     'nccl'
   )
+  source+=(cutlass.tar.gz::https://github.com/NVIDIA/cutlass/archive/refs/tags/v3.0.0.tar.gz)
+  sha512sums+=('SKIP')
 fi
 
 if [[ $_ENABLE_TENSORRT = 1 ]]; then
@@ -192,7 +194,9 @@ build() {
 
   # Gcc 12+
   CXXFLAGS+=" -Wno-maybe-uninitialized -Wno-error=restrict"
-  CXXFLAGS+=" -Wno-error=stringop-overflow -Wno-error=dangling-reference -Wno-error=deprecated-declarations"
+  CXXFLAGS+=" -Wno-error=stringop-overflow"
+  # CXXFLAGS+=" -Wno-error=dangling-reference"
+  CXXFLAGS+=" -Wno-error=deprecated-declarations"
   CFLAGS="${CFLAGS/_FORTIFY_SOURCE=2/_FORTIFY_SOURCE=0}"
   CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=2/_FORTIFY_SOURCE=0}"
 
@@ -249,6 +253,9 @@ build() {
       -Donnxruntime_USE_NCCL=ON
       -Donnxruntime_NVCC_THREADS=1
     )
+    _cmake_args+=(
+      -DFETCHCONTENT_SOURCE_DIR_CUTLASS=$(echo "$srcdir"/cutlass-*)
+    )
   fi
 
   if [[ ${_ENABLE_TENSORRT} = 1 ]]; then
@@ -258,7 +265,7 @@ build() {
     )
   fi
 
-  cmake -S onnxruntime/cmake -B build \
+  cmake -S onnxruntime-$pkgver/cmake -B build \
   "${_cmake_args[@]}" \
   "$@" \
   -G Ninja
@@ -267,8 +274,8 @@ build() {
 
   (
   cd build
-  install -Dm644 ../onnxruntime/docs/python/README.rst docs/python/README.rst
-  ln -sf ../onnxruntime/setup.py .
+  install -Dm644 ../onnxruntime-$pkgver/docs/python/README.rst docs/python/README.rst
+  ln -sf ../onnxruntime-$pkgver/setup.py .
   python -m build --wheel --no-isolation
   )
 
@@ -297,8 +304,8 @@ package_onnxruntime() {
 
   # chrpath -d "${pkgdir}/usr/lib/"libonnxruntime.so.*
 
-  install -Dm644 onnxruntime/LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-  install -Dm644 onnxruntime/ThirdPartyNotices.txt "${pkgdir}/usr/share/licenses/${pkgname}/ThirdPartyNotices.txt"
+  install -Dm644 onnxruntime-$pkgver/LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 onnxruntime-$pkgver/ThirdPartyNotices.txt "${pkgdir}/usr/share/licenses/${pkgname}/ThirdPartyNotices.txt"
 }
 
 package_python-onnxruntime() {
