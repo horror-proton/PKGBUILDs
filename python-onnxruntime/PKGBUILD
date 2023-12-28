@@ -167,23 +167,6 @@ prepare() {
 #   python compile_schema.py --flatc /usr/bin/flatc
 }
 
-_build_flatbuffers() {
-  echo > flatbuffers-1.12.0/CMake/Version.cmake
-  local build_dir=build-flatbuffers
-  local no_error=(stringop-overflow class-memaccess)
-
-  CXXFLAGS="$CXXFLAGS ${no_error[*]/#/-Wno-error=}" \
-  cmake -B "$1" -S flatbuffers-* \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DCMAKE_CXX_STANDARD=17 \
-    -DGIT_DESCRIBE_DIRTY=v1.12.0 \
-    -DVERSION_MAJOR=1 \
-    -DVERSION_MINOR=12 \
-    -DVERSION_PATCH=0
-  cmake --build "$1"
-  DESTDIR="$srcdir" cmake --install "$1"
-}
-
 build() {
 
   if [[ ${_ENABLE_CUDA} = 1 ]]; then
@@ -195,7 +178,9 @@ build() {
   # Gcc 12+
   CXXFLAGS+=" -Wno-maybe-uninitialized -Wno-error=restrict"
   CXXFLAGS+=" -Wno-error=stringop-overflow"
-  # CXXFLAGS+=" -Wno-error=dangling-reference"
+  if [[ ${_ENABLE_CUDA} -ne 1 ]]; then
+    CXXFLAGS+=" -Wno-error=dangling-reference"
+  fi
   CXXFLAGS+=" -Wno-error=deprecated-declarations"
   CFLAGS="${CFLAGS/_FORTIFY_SOURCE=2/_FORTIFY_SOURCE=0}"
   CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=2/_FORTIFY_SOURCE=0}"
