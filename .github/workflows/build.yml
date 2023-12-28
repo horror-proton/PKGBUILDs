@@ -16,13 +16,6 @@ jobs:
       actions: write
 
     steps:
-      - name: Create user
-        run: |
-          chmod -R a+rw .
-          useradd arch -m -d /home/arch
-          echo "arch ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-          sudo --set-home --user=arch mkdir -p ~arch/.cache/paru ~arch/.cache/ccache
-
       - name: Cache packages
         uses: actions/cache/restore@v3
         id: packages-cache
@@ -30,20 +23,23 @@ jobs:
           key: packages
           path: | 
             /var/cache/pacman
-            /home/arch/.cache/paru
+            ~/.cache/paru
 
       - name: Upgrade system
         run: |
           pacman-key --init
           pacman -Sy --needed --noconfirm archlinux-keyring
           pacman -Syu --noconfirm --needed reflector git ccache github-cli pacman-contrib
+          sed -i '/E_ROOT/d' /usr/bin/makepkg
 
       - name: Add unofficial user repositories
         run: |
           cat << _EOF >> /etc/pacman.conf
           [archlinuxcn]
-            Server = https://repo.archlinuxcn.org/\$arch
+            Server = ${{ vars.ALCN_MIRROR || 'https://repo.archlinuxcn.org' }}/\$arch
           _EOF
+
+          pacman-key --lsign-key 'farseerfc@archlinux.org'
 
           pacman -Sy --noconfirm && pacman -S --noconfirm archlinuxcn-keyring
           pacman -Syu --noconfirm
@@ -60,38 +56,45 @@ jobs:
       - uses: actions/cache/restore@v3
         id: ccache-restore
         with:
-          path: /home/arch/.cache/ccache
+          path: ~/.cache/ccache
           key: arch-ccache
 
       - uses: actions/checkout@v3
-      
-      - name: Setup git safe directory
-        run: |
-          git config --global --add safe.directory '*'
-          sudo --set-home --user=arch git config --global --add safe.directory '*'
-          chown -R arch . # DANGER
 
       - name: Install aur helper
         run: |
-          sudo pacman -S --noconfirm paru && exit 0
+          pacman -S --noconfirm paru && exit 0
 
-          sudo --set-home --user=arch -i -- << _EOF
-          set -e
           git clone https://aur.archlinux.org/paru.git
           pushd paru
           makepkg --noconfirm --rmdeps -si
           popd
           rm -rf paru
+
+      - name: Skip paru uid check
+        run: |
+          cat << _EOF | gcc -Wall -fPIC -shared -o /tmp/libuid.so -x c -
+            #include <bits/types.h>
+            #include <stdlib.h>
+            #include <string.h>
+            #include <sys/syscall.h>
+            #include <unistd.h>
+            __uid_t getuid(void) { 
+              char buf[1024];
+              realpath("/proc/self/exe", buf);
+              if (strcmp(buf, "/usr/bin/paru") == 0) return 1000;
+              return syscall(SYS_getuid);
+            }
           _EOF
 
       - name: Build packages
         run: |
-          sudo --set-home --user=arch paru -Su --noconfirm --skipreview ${{ vars.PRE_INSTALL }}
+          paru -Su --noconfirm --skipreview ${{ vars.PRE_INSTALL }}
 
           for dir in *${{ github.event_name == 'schedule' && '-git' || '' }}/; do
             echo ::group::$dir
-            pushd $dir
-            sudo --set-home --user=arch paru -U --noconfirm --skipreview
+            pushd "$dir"
+            LD_PRELOAD=/tmp/libuid.so paru -U --noconfirm --skipreview
             popd
             echo ::endgroup::
           done
@@ -115,7 +118,7 @@ jobs:
           shopt -s nullglob
 
           aurs=$(pacman -Qmq) || exit 0
-          for fn in /home/arch/.cache/paru/clone/*; do
+          for fn in ~/.cache/paru/clone/*; do
             if [ $(comm -12 <(grep 'pkgname' "$fn"/.SRCINFO | cut -d \  -f 3 | sort) <(echo "$aurs") | wc -l) -eq 0 ]; then
               echo removing "$fn"
               rm -rf "$fn"
@@ -129,12 +132,12 @@ jobs:
           key: packages
           path: | 
             /var/cache/pacman
-            /home/arch/.cache/paru
+            ~/.cache/paru
 
       - uses: actions/cache/save@v3
         if: always()
         with:
-          path: /home/arch/.cache/ccache
+          path: ~/.cache/ccache
           key: arch-ccache
 
       - uses: softprops/action-gh-release@v1
