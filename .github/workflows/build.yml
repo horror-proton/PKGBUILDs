@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '45 15 * * *'
 
+concurrency:
+  group: packages
+  cancel-in-progress: true
+
 jobs:
   build-packages:
     runs-on: ubuntu-latest
@@ -103,6 +107,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --global --add safe.directory '*'
+
           gh extension install actions/gh-actions-cache
           if ${{ steps.ccache-restore.outputs.cache-hit == 'true' }}; then
             gh actions-cache delete arch-ccache --confirm
