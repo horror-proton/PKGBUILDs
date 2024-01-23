@@ -1,7 +1,7 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
 pkgname=maa-assistant-arknights-git
-pkgver=4.26.0beta.2.r37.aecd16c4c
+pkgver=5.0.0beta.2.r1.6032d0d1c
 pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
@@ -16,7 +16,9 @@ source=("MaaAssistantArknights::git+$url.git#branch=dev"
 md5sums=('SKIP'
          'SKIP')
 
-CXXFLAGS="$CXXFLAGS -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
+if ((WITH_GPU)); then
+    depends+=( cuda )
+fi
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
@@ -25,61 +27,58 @@ pkgver() {
 
 prepare() {
     cd "$srcdir/MaaAssistantArknights"
-    sed -i 's/RUNTIME\sDESTINATION\s\./ /g; s/LIBRARY\sDESTINATION\s\./ /g; s/PUBLIC_HEADER\sDESTINATION\s\./ /g' CMakeLists.txt
-    sed -i 's/find_package(asio /# find_package(asio /g' CMakeLists.txt
-    sed -i 's/asio::asio/ /g' CMakeLists.txt
+    sed -e 's/RUNTIME\sDESTINATION\s\./ /g' \
+        -e 's/LIBRARY\sDESTINATION\s\./ /g' \
+        -e 's/PUBLIC_HEADER\sDESTINATION\s\./ /g' -i CMakeLists.txt
+    sed -e 's/find_package(asio /# find_package(asio /g' \
+        -e 's/find_package(MaaDerpLearning/# find_package(MaaDerpLearning/g' \
+        -e 's/asio::asio/ /g' -i CMakeLists.txt
+    sed -i "7iadd_subdirectory(\${CMAKE_CURRENT_SOURCE_DIR}/../FastDeploy \${CMAKE_CURRENT_BINARY_DIR}/fastdeploy EXCLUDE_FROM_ALL SYSTEM)" CMakeLists.txt
+    sed -i "8iinclude_directories(SYSTEM \${CMAKE_CURRENT_SOURCE_DIR}/../FastDeploy)" CMakeLists.txt
+    sed -i "9iinstall(TARGETS MaaDerpLearning)" CMakeLists.txt
+    
+    shopt -s globstar nullglob
+    sed -i 's/onnxruntime\/core\/session\///g' src/MaaCore/**/{*.h,*.cpp,*.hpp,*.cc}
 
-    find "src/MaaCore" \
-        \( -name '*.h' -or -name '*.cpp' -or -name '*.hpp' -or -name '*.cc' \) \
-        -exec sed -i 's/onnxruntime\/core\/session\///g' {} \;
     cp -v "$srcdir"/FastDeploy/cmake/Findonnxruntime.cmake cmake
     sed -i 's/ONNXRuntime/onnxruntime/g' CMakeLists.txt
 
-    cd "$srcdir/FastDeploy"
+    cd "$srcdir"/FastDeploy
     sed -i 's/fastdeploy_ppocr/MaaDerpLearning/g' CMakeLists.txt # git revert -n 0ef77d332
 }
 
 build() {
     cd "$srcdir"
-    CXXFLAGS="$CXXFLAGS -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
 
-    cmake -B build-fastdeploy -S FastDeploy \
-        -DCMAKE_BUILD_TYPE=None \
-        -DBUILD_SHARED_LIBS=ON \
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-        -DCMAKE_INSTALL_PREFIX="$srcdir"/installed/usr
-    cmake --build build-fastdeploy
-
-    mkdir -p installed/usr
-    cmake --install build-fastdeploy --prefix "$srcdir"/installed/usr
-
-    cd "$srcdir"
-
-    CXXFLAGS="$CXXFLAGS \
-    -isystem /usr/include/onnxruntime/core/session \
-    -isystem $srcdir/installed/usr/include" \
-    cmake -B build -S MaaAssistantArknights \
-        -DCMAKE_BUILD_TYPE=None \
-        -DCMAKE_PREFIX_PATH="$srcdir"/installed/usr \
-        -DUSE_MAADEPS=OFF \
-        -DINSTALL_THIRD_LIBS=ON \
-        -DINSTALL_RESOURCE=ON \
-        -DINSTALL_PYTHON=ON \
+    _cmake_flags=(
+        -DCMAKE_BUILD_TYPE=None
+        -DUSE_MAADEPS=OFF
+        -DINSTALL_RESOURCE=ON
+        -DINSTALL_PYTHON=ON
+        -DBUILD_SHARED_LIBS=ON
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DCMAKE_INSTALL_PREFIX="$pkgdir"/usr
         -DMAA_VERSION=v"$pkgver"
+    )
+
+    if ((WITH_GPU)); then
+        _cmake_flags+=( -DWITH_GPU=ON -DCUDA_DIRECTORY=/opt/cuda -DCUDA_ARCH_NAME=Auto )
+    fi
+
+    CXXFLAGS+=" -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
+    CXXFLAGS+=" -isystem /usr/include/onnxruntime/core/session"
+
+    cmake -B build -S MaaAssistantArknights "${_cmake_flags[@]}"
     cmake --build build
 }
 
 package() {
     cd "$srcdir"
-    mkdir -p "$pkgdir"/usr
-    mv -fv "$srcdir"/installed/usr/lib "$pkgdir"/usr
     cmake --install build --prefix "$pkgdir"/usr
 
     cd "$pkgdir"/usr
     mkdir -p share/"${pkgname%-git}"
     mv Python share/"${pkgname%-git}"
     mv resource share/"${pkgname%-git}"
-
-    cd share/"${pkgname%-git}"
-    ln -s ../../lib/* .
+    ln -sr lib/* share/"${pkgname%-git}"
 }
