@@ -1,5 +1,6 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 
+# shellcheck disable=SC2034 disable=SC2164
 pkgname=maa-assistant-arknights-git
 pkgver=5.0.0beta.2.r1.6032d0d1c
 pkgrel=1
@@ -22,7 +23,7 @@ fi
 
 pkgver() {
     cd "$srcdir/MaaAssistantArknights"
-    printf "%s" "$(git describe --long --tags --match='v*' | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g')"
+    git describe --long --tags --match='v*' | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g'
 }
 
 prepare() {
@@ -33,10 +34,10 @@ prepare() {
     sed -e 's/find_package(asio /# find_package(asio /g' \
         -e 's/find_package(MaaDerpLearning/# find_package(MaaDerpLearning/g' \
         -e 's/asio::asio/ /g' -i CMakeLists.txt
-    sed -i "7iadd_subdirectory(\${CMAKE_CURRENT_SOURCE_DIR}/../FastDeploy \${CMAKE_CURRENT_BINARY_DIR}/fastdeploy EXCLUDE_FROM_ALL SYSTEM)" CMakeLists.txt
-    sed -i "8iinclude_directories(SYSTEM \${CMAKE_CURRENT_SOURCE_DIR}/../FastDeploy)" CMakeLists.txt
-    sed -i "9iinstall(TARGETS MaaDerpLearning)" CMakeLists.txt
-    
+    sed -i "7i""add_subdirectory(\${SOURCE_DIR_FASTDEPLOY} \${BINARY_DIR_FASTDEPLOY} EXCLUDE_FROM_ALL SYSTEM) \\
+        include_directories(SYSTEM \${SOURCE_DIR_FASTDEPLOY}) \\
+        install(TARGETS MaaDerpLearning)" CMakeLists.txt
+
     shopt -s globstar nullglob
     sed -i 's/onnxruntime\/core\/session\///g' src/MaaCore/**/{*.h,*.cpp,*.hpp,*.cc}
 
@@ -50,7 +51,7 @@ prepare() {
 build() {
     cd "$srcdir"
 
-    _cmake_flags=(
+    local _cmake_flags=(
         -DCMAKE_BUILD_TYPE=None
         -DUSE_MAADEPS=OFF
         -DINSTALL_RESOURCE=ON
@@ -59,14 +60,16 @@ build() {
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCMAKE_INSTALL_PREFIX="$pkgdir"/usr
         -DMAA_VERSION=v"$pkgver"
+        -DSOURCE_DIR_FASTDEPLOY="$srcdir"/FastDeploy
+        -DBINARY_DIR_FASTDEPLOY="$srcdir"/build-FastDeploy
     )
 
     if ((WITH_GPU)); then
         _cmake_flags+=( -DWITH_GPU=ON -DCUDA_DIRECTORY=/opt/cuda -DCUDA_ARCH_NAME=Auto )
     fi
 
-    CXXFLAGS+=" -fmacro-prefix-map=$srcdir=/usr/src/debug/${pkgname%-git}"
-    CXXFLAGS+=" -isystem /usr/include/onnxruntime/core/session"
+    CXXFLAGS+=" -fmacro-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}/${pkgbase}"
+    CXXFLAGS+=" -isystem /usr/include/onnxruntime/core/session" # in case onnxruntime<=1.15
 
     cmake -B build -S MaaAssistantArknights "${_cmake_flags[@]}"
     cmake --build build
@@ -76,9 +79,8 @@ package() {
     cd "$srcdir"
     cmake --install build --prefix "$pkgdir"/usr
 
-    cd "$pkgdir"/usr
+    cd "$pkgdir"/usr/
     mkdir -p share/"${pkgname%-git}"
-    mv Python share/"${pkgname%-git}"
-    mv resource share/"${pkgname%-git}"
+    mv Python resource share/"${pkgname%-git}"
     ln -sr lib/* share/"${pkgname%-git}"
 }
