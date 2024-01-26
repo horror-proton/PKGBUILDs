@@ -1,12 +1,12 @@
 # Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
 pkgname=maa-cli-git
-pkgver=0.3.11.r11.d813338
+pkgver=0.4.1.r2.0b70be9
 pkgrel=1
 pkgdesc="A simple CLI for MAA by Rust."
 arch=('x86_64' 'aarch64')
 url="https://github.com/MaaAssistantArknights/maa-cli"
-license=('AGPL')
-depends=('gcc-libs')
+license=('AGPL-3.0-or-later')
+depends=('gcc-libs' 'libgit2' 'openssl')
 makedepends=('git' 'cargo')
 optdepends=('maa-assistant-arknights: for preinstalled maa core')
 provides=("${pkgname%-git}")
@@ -31,7 +31,7 @@ build() {
 	export CARGO_TARGET_DIR=target
 
 	export MAA_EXTRA_SHARE_NAME=maa-assistant-arknights
-	cargo build --frozen --release --no-default-features
+	cargo build --frozen --release --no-default-features --features=core_installer,git2
 }
 
 check() {
