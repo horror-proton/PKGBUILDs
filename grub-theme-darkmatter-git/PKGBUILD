@@ -1,0 +1,38 @@
+#!/usr/bin/bash
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+
+# shellcheck disable=SC2034 disable=SC2164
+pkgname=grub-theme-darkmatter-git
+pkgver=r27.efe1abb
+pkgrel=1
+pkgdesc="a collection of dark polished GRUB themes for a variety of Linux distros"
+arch=(any)
+url="https://gitlab.com/VandalByte/darkmatter-grub-theme"
+license=('GPL-3.0-or-later')
+makedepends=(git)
+source=("git+$url.git")
+sha256sums=(SKIP)
+
+STYLE=${STYLE:-arch}
+RESOLUTION=${RESOLUTION:-1080p}
+
+pkgver() {
+	cd "$srcdir"/darkmatter-grub-theme
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+_src_to_pkg() {
+	local dst="$1"
+	shift
+	cp -r "$@" "${pkgdir:?}"/usr/share/grub/themes/darkmatter/"$dst"
+}
+
+package() {
+	cd "$srcdir"/darkmatter-grub-theme
+
+	mkdir -p "$pkgdir"/usr/share/grub/themes/darkmatter
+	_src_to_pkg background.png      assets/backgrounds/${STYLE}-${RESOLUTION}.png
+	_src_to_pkg .                   assets/fonts/${RESOLUTION}/*
+	_src_to_pkg icons               assets/icons-${RESOLUTION}/color/
+	_src_to_pkg .                   base/${RESOLUTION}/*
+}
