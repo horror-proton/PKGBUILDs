@@ -13,6 +13,7 @@ provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
 source=("${pkgname%-git}::git+$url.git")
 md5sums=('SKIP')
+options=(!lto)
 
 pkgver() {
 	cd "$srcdir/${pkgname%-git}"
