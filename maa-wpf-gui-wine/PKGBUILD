@@ -1,0 +1,71 @@
+# Maintainer: Your Name <youremail@domain.com>
+# shellcheck disable=SC2164
+pkgname=maa-wpf-gui-wine
+pkgver=0
+pkgrel=1
+pkgdesc=""
+arch=("x86_64")
+url="https://github.com/MaaAssistantArknights/MaaAssistantArknights"
+license=('AGPL-3.0-only')
+depends=(cmake wine)
+makedepends=(
+	# dotnet-sdk-8.0  # Microsoft.NET.Sdk.WindowsDesktop missing
+	)
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("$url/archive/pull/8960/merge.tar.gz"
+	"https://download.visualstudio.microsoft.com/download/pr/bf435b42-3f28-45db-a666-6e95c4faefe7/23e0b703124347b51f53faf64c829287/dotnet-sdk-8.0.204-win-x64.zip"
+	"https://download.visualstudio.microsoft.com/download/pr/0a1b3cbd-b4af-4d0d-9ed7-0054f0e200b4/4bcc533c66379caaa91770236667aacb/dotnet-sdk-8.0.204-linux-x64.tar.gz"
+	)
+noextract=("${source[-1]##*/}" "${source[-2]##*/}")
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+validpgpkeys=()
+
+prepare() {
+	mkdir -p dotnet
+	bsdtar -xf dotnet-sdk-8.0.204-win-x64.zip -C dotnet
+	bsdtar -xf dotnet-sdk-8.0.204-linux-x64.tar.gz -C dotnet
+	# cp -r /usr/share/dotnet .
+	cd MaaAssistantArknights-pull-8960-merge
+	cd src/MaaWpfGui
+	sed -i -e 's/UpdateCheck, bool\.TrueString/UpdateCheck, bool\.FalseString/g' ViewModels/UI/SettingsViewModel.cs
+}
+
+_args=(
+	--runtime win-x64
+	-p "Platform=x64;Configuration=RelWithDebInfo"
+)
+
+_dotnet() {
+	export NUGET_PACKAGES="${srcdir?}"/.nuget/packages
+	export DOTNET_ROOT="$srcdir"/dotnet
+	"$DOTNET_ROOT"/dotnet "$@"
+}
+
+build() {
+	cd MaaAssistantArknights-pull-8960-merge
+
+	_dotnet build src/MaaWpfGui/MaaWpfGui.csproj "${_args[@]}"
+
+	pushd src/MaaWineBridge
+	cmake -B "$srcdir"/build -DCMAKE_TOOLCHAIN_FILE=winegcc.cmake
+	cmake --build "$srcdir"/build --verbose
+	popd
+}
+
+package() {
+	cd MaaAssistantArknights-pull-8960-merge
+
+	_dotnet publish src/MaaWpfGui/MaaWpfGui.csproj "${_args[@]}" \
+		-o "${pkgdir?}"/opt/maa-wpf-gui-wine
+
+	cp -v "$srcdir"/build/MaaCore.dll "${pkgdir?}"/opt/maa-wpf-gui-wine/MaaCore.dll
+	exit 1
+}
