@@ -71,6 +71,8 @@ build() {
     CXXFLAGS+=" -fmacro-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}/${pkgbase}"
     CXXFLAGS+=" -isystem /usr/include/onnxruntime/core/session" # in case onnxruntime<=1.15
 
+    CXXFLAGS+=" -DASST_WITH_EMULATOR_EXTRAS=0"
+
     cmake -B build -S MaaAssistantArknights "${_cmake_flags[@]}"
     cmake --build build
 }
