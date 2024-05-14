@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Cache packages
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: packages-cache
         with:
           key: packages
@@ -57,13 +57,13 @@ jobs:
           sed -i 's/!ccache/ccache/g' /etc/makepkg.conf
           echo 'MAKEFLAGS="-j$(nproc --all)"' >> /etc/makepkg.conf
 
-      - uses: actions/cache/restore@v3
+      - uses: actions/cache/restore@v4
         id: ccache-restore
         with:
           path: ~/.cache/ccache
           key: arch-ccache
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install aur helper
         run: |
@@ -133,14 +133,14 @@ jobs:
 
       - name: Save package cache
         if: always()
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           key: packages
           path: | 
             /var/cache/pacman
             ~/.cache/paru
 
-      - uses: actions/cache/save@v3
+      - uses: actions/cache/save@v4
         if: always()
         with:
           path: ~/.cache/ccache
