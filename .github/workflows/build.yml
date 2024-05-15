@@ -67,6 +67,17 @@ jobs:
 
       - name: Install aur helper
         run: |
+          set -x
+          echo $HOME
+          whoami
+          id
+          echo $USER
+          realpath ~$(whoami)
+          pwd
+          findmnt
+
+          find -maxdepth=5 ~/.cache/paru/clone/
+
           pacman -S --noconfirm paru && exit 0
 
           git clone https://aur.archlinux.org/paru.git
@@ -95,7 +106,8 @@ jobs:
         run: |
           paru -Su --noconfirm --skipreview ${{ vars.PRE_INSTALL }}
 
-          for dir in *${{ github.event_name == 'schedule' && '-git' || '' }}/; do
+          exit 1
+          for dir in *${{ github.event_name == 'schedule' && '-git' || '-git' }}/; do
             echo ::group::$dir
             pushd "$dir"
             LD_PRELOAD=/tmp/libuid.so paru -U --noconfirm --skipreview
@@ -146,7 +158,7 @@ jobs:
           path: ~/.cache/ccache
           key: arch-ccache
 
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: ${{ github.ref_name == 'master' }}
         with:
           tag_name: latest
