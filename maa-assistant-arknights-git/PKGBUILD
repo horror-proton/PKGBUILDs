@@ -7,13 +7,13 @@ pkgrel=1
 pkgdesc="An Arknights assistant"
 arch=(x86_64)
 url="https://github.com/MaaAssistantArknights/MaaAssistantArknights"
-license=('AGPL')
+license=('AGPL-3.0-only')
 depends=(opencv onnxruntime cpr)
 makedepends=(asio eigen git cmake)
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
-source=("MaaAssistantArknights::git+$url.git#branch=dev"
-        'FastDeploy::git+https://github.com/MaaAssistantArknights/FastDeploy.git#branch=master')
+source=("MaaAssistantArknights::git+$url.git"
+        'FastDeploy::git+https://github.com/MaaAssistantArknights/FastDeploy.git')
 md5sums=('SKIP'
          'SKIP')
 
@@ -26,28 +26,6 @@ pkgver() {
     git describe --long --tags --match='v*' | rev | sed 's/-//3' | rev | sed 's/^v//;s/\([^-]*-\)g/r\1/;s/-/./g'
 }
 
-prepare() {
-    cd "$srcdir/MaaAssistantArknights"
-    sed -e 's/RUNTIME\sDESTINATION\s\./ /g' \
-        -e 's/LIBRARY\sDESTINATION\s\./ /g' \
-        -e 's/PUBLIC_HEADER\sDESTINATION\s\./ /g' -i CMakeLists.txt
-    sed -e 's/find_package(asio /# find_package(asio /g' \
-        -e 's/find_package(MaaDerpLearning/# find_package(MaaDerpLearning/g' \
-        -e 's/asio::asio/ /g' -i CMakeLists.txt
-    sed -i "7i""add_subdirectory(\${SOURCE_DIR_FASTDEPLOY} \${BINARY_DIR_FASTDEPLOY} EXCLUDE_FROM_ALL SYSTEM) \\
-        include_directories(SYSTEM \${SOURCE_DIR_FASTDEPLOY}) \\
-        install(TARGETS MaaDerpLearning)" CMakeLists.txt
-
-    shopt -s globstar nullglob
-    sed -i 's/onnxruntime\/core\/session\///g' src/MaaCore/**/{*.h,*.cpp,*.hpp,*.cc}
-
-    cp -v "$srcdir"/FastDeploy/cmake/Findonnxruntime.cmake cmake
-    sed -i 's/ONNXRuntime/onnxruntime/g' CMakeLists.txt
-
-    cd "$srcdir"/FastDeploy
-    sed -i 's/fastdeploy_ppocr/MaaDerpLearning/g' CMakeLists.txt # git revert -n 0ef77d332
-}
-
 build() {
     cd "$srcdir"
 
@@ -56,30 +34,27 @@ build() {
         -DUSE_MAADEPS=OFF
         -DINSTALL_RESOURCE=ON
         -DINSTALL_PYTHON=ON
+        -DINSTALL_FLATTEN=OFF
         -DBUILD_SHARED_LIBS=ON
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCMAKE_INSTALL_PREFIX="$pkgdir"/usr
-        -DMAA_VERSION=v"$pkgver"
-        -DSOURCE_DIR_FASTDEPLOY="$srcdir"/FastDeploy
-        -DBINARY_DIR_FASTDEPLOY="$srcdir"/build-FastDeploy
+        -DMAA_VERSION="$pkgver"
+        -Dfastdeploy_SOURCE_DIR="$srcdir"/FastDeploy
+        -Dfastdeploy_BINARY_DIR="$srcdir"/build-FastDeploy
     )
 
     if ((WITH_GPU)); then
         _cmake_flags+=( -DWITH_GPU=ON -DCUDA_DIRECTORY=/opt/cuda -DCUDA_ARCH_NAME=Auto )
     fi
 
-    CXXFLAGS+=" -fmacro-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}/${pkgbase}"
-    CXXFLAGS+=" -isystem /usr/include/onnxruntime/core/session" # in case onnxruntime<=1.15
+    CXXFLAGS+=" -fmacro-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}/${pkgbase:?}"
 
-    CXXFLAGS+=" -DASST_WITH_EMULATOR_EXTRAS=0"
-
-    cmake -B build -S MaaAssistantArknights "${_cmake_flags[@]}"
+    cmake -B build -S "MaaAssistantArknights" "${_cmake_flags[@]}"
     cmake --build build
 }
 
 package() {
-    cd "$srcdir"
-    cmake --install build --prefix "$pkgdir"/usr
+    cmake --install "$srcdir"/build --prefix "$pkgdir"/usr
 
     cd "$pkgdir"/usr/
     mkdir -p share/"${pkgname%-git}"
