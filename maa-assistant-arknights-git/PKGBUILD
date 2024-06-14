@@ -17,7 +17,7 @@ source=("MaaAssistantArknights::git+$url.git"
 md5sums=('SKIP'
          'SKIP')
 
-if ((WITH_GPU)); then
+if ((WITH_CUDA)); then
     depends+=( cuda )
 fi
 
@@ -43,8 +43,8 @@ build() {
         -Dfastdeploy_BINARY_DIR="$srcdir"/build-FastDeploy
     )
 
-    if ((WITH_GPU)); then
-        _cmake_flags+=( -DWITH_GPU=ON -DCUDA_DIRECTORY=/opt/cuda -DCUDA_ARCH_NAME=Auto )
+    if ((WITH_CUDA)); then
+        _cmake_flags+=( -DWITH_CUDA=ON -DCUDA_DIRECTORY=/opt/cuda -DCUDA_ARCH_NAME=Auto )
     fi
 
     CXXFLAGS+=" -fmacro-prefix-map=$srcdir=${DBGSRCDIR:-/usr/src/debug}/${pkgbase:?}"
