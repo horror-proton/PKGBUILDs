@@ -1,0 +1,36 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=wlopm-git
+pkgver=0.1.0.r5.54230d7
+pkgrel=1
+pkgdesc="Simple client implementing zwlr-output-power-management-v1."
+arch=(x86_64)
+url="https://git.sr.ht/~leon_plickat/wlopm"
+license=('GPL-3.0-only')
+depends=('glibc' 'wayland')
+makedepends=('git')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+source=("git+$url")
+sha256sums=('SKIP')
+
+
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+	printf "%s" "$(git describe --long | sed 's/\([^-]*-\)g/r\1/;s/-/./g;s/^v//g')"
+}
+
+prepare() {
+	cd "$srcdir/${pkgname%-git}"
+	sed -i 's/usr\/local/usr/g' Makefile
+}
+
+build() {
+	cd "$srcdir/${pkgname%-git}"
+	make
+}
+
+package() {
+	cd "$srcdir/${pkgname%-git}"
+	mkdir -p "$pkgdir"/usr/share/bash-completion/completions
+	make DESTDIR="$pkgdir/" install
+}
