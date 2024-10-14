@@ -1,0 +1,24 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=openbox-theme-catppuccin-git
+pkgver=r7.bb1c866
+pkgrel=1
+pkgdesc="Soothing pastel theme for Openbox"
+arch=('any')
+url="https://github.com/catppuccin/openbox"
+license=('MIT')
+depends=()
+makedepends=('git')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+source=("git+$url.git")
+sha256sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/openbox"
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+	cd "$srcdir/openbox"
+	find themes -type f -exec install -Dm644 {} "$pkgdir/usr/share/{}" \;
+}
