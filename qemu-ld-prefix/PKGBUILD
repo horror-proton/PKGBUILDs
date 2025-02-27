@@ -1,0 +1,16 @@
+# Maintainer: Horror Proton <107091537+horror-proton@users.noreply.github.com>
+pkgname=qemu-ld-prefix
+pkgver=1
+pkgrel=1
+arch=(any)
+
+package() {
+    cd "${pkgdir:?}"
+    local cpus=(riscv64 x86_64 aarch64 loongarch64 mips64)
+
+    mkdir -p usr/gnemul
+    cd usr/gnemul
+    for cpu in "${cpus[@]}"; do
+        ln -sv ../"$cpu"-linux-gnu/lib qemu-"$cpu"
+    done
+}
