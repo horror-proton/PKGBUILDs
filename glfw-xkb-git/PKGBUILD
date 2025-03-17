@@ -1,0 +1,55 @@
+_pkgbase=glfw
+pkgname=glfw-xkb-git
+pkgver=3.4.r23.ge7ea71be
+pkgrel=1
+pkgdesc="Free, open source, portable framework for OpenGL application development (git version)"
+arch=('x86_64' 'armv7h' 'aarch64')
+url="http://www.glfw.org/"
+license=('custom:ZLIB')
+depends=('libxi' 'libxrandr' 'libxinerama' 'libxcursor' 'wayland' 'libxkbcommon')
+makedepends=('git' 'cmake' 'ninja' 'doxygen' 'wayland-protocols' 'mesa')
+conflicts=('glfw' 'glfw-x11' 'glfw-wayland')
+provides=('glfw' 'glfw-x11' 'glfw-wayland')
+replaces=('glfw-x11-git' 'glfw-wayland-git')
+optdepends=('libgl: for OpenGL support'
+  'opengl-driver: for OpenGL support'
+  'vulkan-icd-loader: for Vulkan support'
+  'vulkan-driver: for Vulkan support')
+source=("$_pkgbase::git+https://github.com/glfw/glfw"
+  "git+https://github.com/horror-proton/glfw-patch.git")
+sha256sums=('SKIP' 'SKIP')
+
+pkgver() {
+  cd "$_pkgbase"
+  git describe --long | sed -r 's/([^-]*-g)/r\1/;s/-/./g'
+}
+
+prepare() {
+  cd "$_pkgbase"
+  shopt -s globstar nullglob
+  patch -Np1 < ../glfw-patch/wayland-key.patch
+  patch -Np1 < ../glfw-patch/x11-key.patch
+  sed -i -e 's/_glfwInputError(GLFW_FEATURE_UNAVAILABLE,/printf("%s\\n",/g' src/wl_*.c
+}
+
+build() {
+  cmake -S "$_pkgbase" -B build \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DGLFW_LIBRARY_TYPE=SHARED \
+    -DGLFW_BUILD_WAYLAND=ON \
+    -DGLFW_BUILD_EXAMPLES=OFF \
+    -DGLFW_BUILD_TESTS=OFF \
+    -Wno-dev \
+    -G Ninja
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+  install -Dm644 "$_pkgbase"/LICENSE.md "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+# vim:set ts=2 sw=2 et:
